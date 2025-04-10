@@ -18,6 +18,7 @@ const TROPHY = "🏆";
 const FIRE = "🔥";
 const BASKETBALL = "🏀";
 
+// new player function
 function addPlayer() {
     const name = playerNameInput.value.trim();
     if (name) {
@@ -30,6 +31,7 @@ function addPlayer() {
     }
 }
 
+// Update player table 
 function updatePlayerTable() {
     playersBody.innerHTML = "";
     players.forEach((player, index) => {
@@ -42,6 +44,7 @@ function updatePlayerTable() {
     });
 }
 
+
 function logMessage(message, className = "") {
     const div = document.createElement("div");
     div.className = `log-item ${className}`;
@@ -50,20 +53,23 @@ function logMessage(message, className = "") {
     gameLog.scrollTop = gameLog.scrollHeight;
 }
 
+
 function simulateShots(attempts) {
     let score = 0;
-    const successRate = 0.6 + Math.random() * 0.2;
+    const successRate = 0.5 + Math.random() * 0.4; 
     for (let i = 0; i < attempts; i++) {
         if (Math.random() < successRate) {
             score++;
         }
     }
-    return Math.min(score, 3);
+    return Math.min(score, attempts);
 }
 
+
 function simulateTiebreakerShots() {
-    return Math.floor(Math.random() * 3) + 1; // 1 to 3
+    return Math.floor(Math.random() * 3) + 1; 
 }
+
 
 function displayRankings(playersList) {
     logMessage(`${TROPHY} Rankings after this round:`);
@@ -76,49 +82,50 @@ function displayRankings(playersList) {
     logMessage(message);
 }
 
+
 function playGame() {
     if (players.length < 2) {
         logMessage("At least 2 players are needed to play.");
         return;
     }
 
-    // Reset scores
+    
+    gameLog.innerHTML = "";
     players.forEach(player => player.score = 0);
     updatePlayerTable();
-    gameLog.innerHTML = "";
 
-    logMessage("Round 1 begins!");
-    players.forEach((player, index) => {
-        player.score = simulateShots(5);
-        logMessage(`${player.name} scored ${player.score} points.`);
-    });
-    updatePlayerTable();
-    displayRankings(players);
+    let round = 1;  
+    let winnerDeclared = false;
 
-    const maxScore = Math.max(...players.map(p => p.score));
-    const tiedPlayers = players.filter(p => p.score === maxScore);
-
-    if (tiedPlayers.length > 1) {
-        logMessage(`${FIRE} Tiebreaker! Round 2 for: ${tiedPlayers.map(p => p.name).join(", ")}`);
-
-        tiedPlayers.forEach(p => p.score = simulateTiebreakerShots());
-        tiedPlayers.forEach(p => logMessage(`${p.name} scored ${p.score} in round 2.`));
-
+    
+    while (!winnerDeclared) {
+        logMessage(`<span class="highlight-round">Round ${round} begins!</span>`);
+        players.forEach((player, index) => {
+            player.score = simulateShots(5);  
+            logMessage(`${player.name} scored ${player.score} points.`);
+        });
         updatePlayerTable();
-        displayRankings(tiedPlayers);
+        displayRankings(players);
 
-        const finalMax = Math.max(...tiedPlayers.map(p => p.score));
-        const winners = tiedPlayers.filter(p => p.score === finalMax);
+        const maxScore = Math.max(...players.map(p => p.score));
+        const tiedPlayers = players.filter(p => p.score === maxScore);
 
-        if (winners.length === 1) {
-            logMessage(`${TROPHY} The champion is ${winners[0].name} with ${winners[0].score} points!`, "log-winner");
+        if (tiedPlayers.length === 1) {
+            
+            logMessage(`${TROPHY} The champion is ${tiedPlayers[0].name} with ${tiedPlayers[0].score} points!`, "log-winner");
+            winnerDeclared = true;
         } else {
-            logMessage(`${TROPHY} Tie again! But no further rounds. Co-winners: ${winners.map(p => p.name).join(", ")}`, "log-winner");
+            
+            logMessage(`${FIRE} Tie detected! Round ${round + 1} will be played for: ${tiedPlayers.map(p => p.name).join(", ")}`);
+
+            
+            players = tiedPlayers;
+
+            round++;
         }
-    } else {
-        logMessage(`${TROPHY} The champion is ${tiedPlayers[0].name} with ${tiedPlayers[0].score} points!`, "log-winner");
     }
 }
+
 
 addPlayerButton.addEventListener("click", addPlayer);
 startGameButton.addEventListener("click", playGame);
